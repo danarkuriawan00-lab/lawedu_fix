@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Edu Kit - Smart Digital Citizenship</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        .animate-zoom-in { animation: zoomIn 0.3s ease-out; }
+        .animate-slide-up { animation: slideInUp 0.4s ease-out; }
+        .animate-pulse-soft { animation: pulse-soft 2s infinite ease-in-out; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .phone-container {
+            height: 100vh;
+            max-width: 450px;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .choice-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name, size, className]);
+
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
+        };
+
+        const CONTENT_MATERI = {
+            'privasi': {
+                title: 'Privasi & Data Pribadi',
+                content: [
+                    { t: 'Apa itu Data Pribadi?', d: 'Identitas yang melekat pada seseorang seperti nama, alamat, hingga riwayat kesehatan.' },
+                    { t: 'Mengapa Penting?', d: 'Mencegah penyalahgunaan identitas untuk penipuan, pinjol ilegal, atau doxing.' },
+                    { t: 'Tips Keamanan', d: 'Gunakan 2FA dan jangan sembarangan mengklik link mencurigakan.' }
+                ]
+            },
+            'cyberbullying': {
+                title: 'Cyberbullying',
+                content: [
+                    { t: 'Pengertian', d: 'Perilaku agresif digital untuk menakuti atau mempermalukan orang lain.' },
+                    { t: 'Dampak Hukum', d: 'Dapat dijerat pasal penghinaan dan pencemaran nama baik dalam UU ITE.' },
+                    { t: 'Cara Menghadapi', d: 'Simpan bukti screenshot dan laporkan ke platform atau pihak berwajib.' }
+                ]
+            },
+            'ite': {
+                title: 'Jerat UU ITE',
+                content: [
+                    { t: 'Pasal 27 ayat 3', d: 'Larangan penyebaran konten penghinaan atau pencemaran nama baik.' },
+                    { t: 'Pasal 28 ayat 2', d: 'Melarang penyebaran informasi yang menimbulkan kebencian SARA.' },
+                    { t: 'Sanksi Pidana', d: 'Hukuman penjara hingga denda miliaran rupiah.' }
+                ]
+            },
+            'hakcipta': {
+                title: 'Hak Cipta Konten',
+                content: [
+                    { t: 'Hargai Karya', d: 'Foto, musik, dan tulisan memiliki hak cipta meskipun diunggah gratis.' },
+                    { t: 'Prinsip Credit', d: 'Sertakan sumber asli jika menggunakan karya orang lain.' },
+                    { t: 'Pelanggaran', d: 'Meniru karya utuh tanpa izin adalah pelanggaran hukum digital.' }
+                ]
+            }
+        };
+
+        const kuisData = [
+            {
+                question: "Apa singkatan dari prinsip 'THINK' dalam beretika di media sosial?",
+                options: [
+                    { id: 'A', text: 'True, Helpful, Inspiring, Necessary, Kind', correct: true },
+                    { id: 'B', text: 'Talk, Honest, Intelligent, New, Known' },
+                    { id: 'C', text: 'Think, Hope, Imagine, Nice, Knowledge' }
+                ]
+            },
+            {
+                question: "Manakah tindakan yang paling tepat jika kamu menerima berita yang belum jelas kebenarannya?",
+                options: [
+                    { id: 'A', text: 'Langsung membagikan ke semua grup WhatsApp' },
+                    { id: 'B', text: 'Melakukan verifikasi fakta (cek fakta) terlebih dahulu', correct: true },
+                    { id: 'C', text: 'Mengomentari dengan kata-kata kasar' }
+                ]
+            },
+            {
+                question: "Pasal 27 ayat 3 UU ITE mengatur tentang larangan...",
+                options: [
+                    { id: 'A', text: 'Pencurian data perbankan' },
+                    { id: 'B', text: 'Penghinaan atau pencemaran nama baik', correct: true },
+                    { id: 'C', text: 'Penyebaran video tutorial' }
+                ]
+            },
+            {
+                question: "Apa itu 'Doxing'?",
+                options: [
+                    { id: 'A', text: 'Menyebarkan data pribadi orang lain tanpa izin untuk tujuan jahat', correct: true },
+                    { id: 'B', text: 'Menghapus akun media sosial secara permanen' },
+                    { id: 'C', text: 'Mengunggah foto pemandangan alam' }
+                ]
+            },
+            {
+                question: "Mengapa kita tidak boleh mengunggah foto tiket pesawat atau KTP ke media sosial?",
+                options: [
+                    { id: 'A', text: 'Karena gambarnya kurang bagus' },
+                    { id: 'B', text: 'Karena mengandung data pribadi yang bisa disalahgunakan penjahat', correct: true },
+                    { id: 'C', text: 'Karena melanggar estetika profil' }
+                ]
+            },
+            {
+                question: "Apa kegunaan dari Two-Factor Authentication (2FA)?",
+                options: [
+                    { id: 'A', text: 'Menambah lapisan keamanan ekstra pada akun digital', correct: true },
+                    { id: 'B', text: 'Mempercepat koneksi internet' },
+                    { id: 'C', text: 'Menambah jumlah follower secara otomatis' }
+                ]
+            },
+            {
+                question: "Tindakan merundung atau mengintimidasi orang lain lewat media digital disebut...",
+                options: [
+                    { id: 'A', text: 'Cyberbullying', correct: true },
+                    { id: 'B', text: 'Digital Marketing' },
+                    { id: 'C', text: 'Online Shopping' }
+                ]
+            },
+            {
+                question: "Jika kamu ingin menggunakan foto karya orang lain, hal yang paling benar adalah...",
+                options: [
+                    { id: 'A', text: 'Mengklaim sebagai karya sendiri' },
+                    { id: 'B', text: 'Meminta izin atau mencantumkan sumber (credit) dengan jelas', correct: true },
+                    { id: 'C', text: 'Menghapus tanda air (watermark) pemilik asli' }
+                ]
+            },
+            {
+                question: "Apa yang harus dilakukan jika menjadi korban perundungan siber?",
+                options: [
+                    { id: 'A', text: 'Membalas dengan cacian yang lebih parah' },
+                    { id: 'B', text: 'Menyimpan bukti (screenshot) dan melapor ke pihak berwenang', correct: true },
+                    { id: 'C', text: 'Menutup diri dan tidak bercerita kepada siapapun' }
+                ]
+            },
+            {
+                question: "Ujaran kebencian (hate speech) berdasarkan SARA dilarang dalam UU ITE Pasal...",
+                options: [
+                    { id: 'A', text: 'Pasal 28 Ayat 2', correct: true },
+                    { id: 'B', text: 'Pasal 1 Ayat 1' },
+                    { id: 'C', text: 'Pasal 45' }
+                ]
+            }
+        ];
+
+        const simData = [
+            {
+                scenario: "1. Kamu melihat temanmu sedang dirundung (bully) di grup pesan sekolah. Apa tindakanmu?",
+                options: [
+                    { t: "Ikut mengomentari biar seru", c: false, msg: "Hati-hati! Ini bisa membuatmu terjerat hukum." },
+                    { t: "Segera ingatkan teman & bela korban", c: true, msg: "Bagus! Kamu adalah Citizen Digital yang cerdas." },
+                    { t: "Diam saja agar tidak terlibat", c: false, msg: "Kurang bijak, korban butuh dukungan moral." }
+                ]
+            },
+            {
+                scenario: "2. Saat mendapatkan pesan berisi berita viral yang belum jelas kebenarannya, kamu...",
+                options: [
+                    { t: "Langsung bagikan ke grup agar cepat diketahui", c: false, msg: "Berhati-hatilah, menyebarkan berita tanpa cek fakta bisa menyesatkan." },
+                    { t: "Cek kebenaran berita melalui sumber resmi dulu", c: true, msg: "Benar! Jangan mudah percaya hoaks." },
+                    { t: "Abaikan dan hapus pesan tersebut", c: false, msg: "Lebih baik cek dulu agar tidak menyebar hoaks." }
+                ]
+            },
+            {
+                scenario: "3. Ada yang mengunggah foto pribadimu tanpa izin di media sosial. Apa yang kamu lakukan?",
+                options: [
+                    { t: "Laporkan ke platform dan minta penghapusan", c: true, msg: "Tindakan tepat untuk melindungi privasi." },
+                    { t: "Balas dengan komentar kasar di unggahan tersebut", c: false, msg: "Jangan ikuti emosi, pilih cara yang bijak." },
+                    { t: "Biarkan saja, tidak masalah", c: false, msg: "Privasi harus tetap dijaga." }
+                ]
+            },
+            {
+                scenario: "4. Kamu menerima DM dari orang tak dikenal yang mengaku 'admin' dan meminta kode OTP yang masuk ke HP-mu.",
+                options: [
+                    { t: "Berikan saja karena dia mengaku admin resmi", c: false, msg: "Bahaya! Ini adalah teknik Phishing untuk mencuri akunmu." },
+                    { t: "Abaikan dan blokir akun tersebut", c: true, msg: "Tepat! Admin asli tidak pernah meminta kode OTP." },
+                    { t: "Tanya balik untuk apa kodenya", c: false, msg: "Berisiko, sebaiknya jangan berinteraksi dengan penipu." }
+                ]
+            },
+            {
+                scenario: "5. Kamu ingin membuat poster sekolah menggunakan gambar keren dari Google. Bagaimana etikanya?",
+                options: [
+                    { t: "Cari gambar yang berlisensi 'Free for Commercial Use'", c: true, msg: "Cerdas! Selalu hargai hak cipta karya orang lain." },
+                    { t: "Langsung pakai saja, kan ada di Google", c: false, msg: "Itu melanggar hak cipta jika tidak ada izin pemilik." },
+                    { t: "Hapus watermark-nya agar terlihat bersih", c: false, msg: "Menghapus watermark tanpa izin adalah pelanggaran serius." }
+                ]
+            },
+            {
+                scenario: "6. Temanmu meminta password media sosialmu dengan alasan 'ingin bantu edit profil'.",
+                options: [
+                    { t: "Kasih saja, kan teman dekat", c: false, msg: "Password bersifat sangat pribadi, jangan pernah dibagi." },
+                    { t: "Tolak dengan sopan dan jelaskan alasannya", c: true, msg: "Bagus! Keamanan akun adalah tanggung jawab pribadimu." },
+                    { t: "Berikan password yang salah sebagai bercandaan", c: false, msg: "Lebih baik katakan 'tidak' demi keamanan bersama." }
+                ]
+            },
+            {
+                scenario: "7. Kamu melihat postingan tokoh publik yang dipenuhi komentar ujaran kebencian (SARA). Apa reaksimu?",
+                options: [
+                    { t: "Ikut menghujat karena banyak yang melakukan", c: false, msg: "Hati-hati, ujaran kebencian SARA dilarang dalam UU ITE." },
+                    { t: "Gunakan fitur 'Report' untuk melaporkan konten", c: true, msg: "Benar! Bantu bersihkan ruang digital dari kebencian." },
+                    { t: "Debat kusir dengan netizen lain di kolom komentar", c: false, msg: "Hanya akan membuang waktu dan memicu konflik baru." }
+                ]
+            },
+            {
+                scenario: "8. Sedang merasa sangat kesal dengan seorang guru, apa yang sebaiknya dilakukan di media sosial?",
+                options: [
+                    { t: "Curhat panjang lebar dengan menyebut nama guru", c: false, msg: "Bahaya, ini bisa dianggap pencemaran nama baik." },
+                    { t: "Ceritakan pada orang tua atau teman secara offline", c: true, msg: "Jauh lebih aman dan solutif daripada di media sosial." },
+                    { t: "Gunakan akun palsu untuk menyindir", c: false, msg: "Jejak digital tetap bisa dilacak meskipun pakai akun palsu." }
+                ]
+            },
+            {
+                scenario: "9. Ada link 'Daftar Bantuan Pemerintah 5 Juta' di grup WhatsApp keluarga. Apa tindakanmu?",
+                options: [
+                    { t: "Klik dulu untuk mengecek kebenarannya", c: false, msg: "Bahaya Malware! Link tersebut bisa mencuri data HP-mu." },
+                    { t: "Beritahu keluarga bahwa itu kemungkinan penipuan", c: true, msg: "Hebat! Kamu membantu menjaga keamanan digital keluarga." },
+                    { t: "Sebarkan lagi ke grup lain biar semua tahu", c: false, msg: "Jangan menyebarkan link yang belum terverifikasi keamanannya." }
+                ]
+            },
+            {
+                scenario: "10. Kamu menemukan dompet di jalan dan ingin mengunggah foto KTP pemiliknya agar cepat ketemu.",
+                options: [
+                    { t: "Foto KTP secara utuh dan posting di Twitter/FB", c: false, msg: "Bahaya! Menampilkan NIK orang lain melanggar privasi data." },
+                    { t: "Posting foto dompetnya saja tanpa memperlihatkan NIK/data sensitif", c: true, msg: "Tepat! Lindungi privasi pemilik meskipun niatmu baik." },
+                    { t: "Biarkan saja orang lain yang mengurusnya", c: false, msg: "Niat menolong itu baik, tapi harus dengan cara yang benar." }
+                ]
+            }
+        ];
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('beranda');
+            const [selectedMateri, setSelectedMateri] = useState(null);
+            
+            // Kuis State
+            const [kuisStep, setKuisStep] = useState(0); 
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [score, setScore] = useState(0);
+            const [showFeedback, setShowFeedback] = useState(false);
+            
+            // Simulasi State
+            const [simStep, setSimStep] = useState(0); 
+            const [currentSimIndex, setCurrentSimIndex] = useState(0);
+            const [simFeedback, setSimFeedback] = useState(null); 
+            const [simScore, setSimScore] = useState(0);
+
+            const logoUrl = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgBENwUGD91BGHhUBoMcXoE5lf0ZrT2rdSJVWEjkldYTAzOzC7MChAwupawsX8Slc4Kk33LjTTYd4WLZQcYQ28WAxYOllfZp1pYo-q_lX9YlDM9XQrfUGd6zQd65NfDSabb0PMprbxpyou5FVu65d0ocx_w5csdq3quXziggZ7wQGBVycQ2g5Tme_g82PIl/w200-h200/Desain%20tanpa%20judul%20(6).png";
+
+            const handleSimChoice = (choice) => {
+                if (simFeedback !== null) return;
+                
+                if (choice.c) setSimScore(prev => prev + 1);
+                setSimFeedback(choice);
+                
+                setTimeout(() => {
+                    if (currentSimIndex < simData.length - 1) {
+                        setCurrentSimIndex(prev => prev + 1);
+                        setSimFeedback(null);
+                    } else {
+                        setSimStep(2);
+                    }
+                }, 2000);
+            };
+
+            const handleKuisNext = () => {
+                if (selectedOption === null || showFeedback) return;
+                const currentQuestion = kuisData[currentQuestionIndex];
+                if (currentQuestion.options[selectedOption]?.correct) {
+                    setScore(prev => prev + 1);
+                }
+                setShowFeedback(true);
+                
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    setSelectedOption(null);
+                    if (currentQuestionIndex < kuisData.length - 1) {
+                        setCurrentQuestionIndex(prev => prev + 1);
+                    } else {
+                        setKuisStep(2);
+                    }
+                }, 1200);
+            };
+
+            return (
+                <div className="phone-container">
+                    {}
+                    <header className="bg-white px-5 py-4 flex items-center justify-between border-b border-slate-50 sticky top-0 z-50">
+                        <div className="flex items-center gap-3">
+                            {(activeTab !== 'beranda' || selectedMateri) && (
+                                <button onClick={() => {
+                                    if (selectedMateri) setSelectedMateri(null);
+                                    else if (activeTab === 'kuis' && kuisStep > 0) setKuisStep(0);
+                                    else if (activeTab === 'simulasi' && simStep > 0) setSimStep(0);
+                                    else setActiveTab('beranda');
+                                }} className="p-2 bg-slate-50 rounded-full text-blue-600 active:scale-90 transition-transform">
+                                    <Icon name="arrow-left" size={18} />
+                                </button>
+                            )}
+                            <div className="flex items-center gap-3">
+                                <img src={logoUrl} alt="Logo" className="w-10 h-10 object-contain" />
+                                <div>
+                                    <h1 className="text-[22px] font-black text-slate-900 uppercase tracking-tighter leading-none">
+                                        {selectedMateri ? 'Materi' : (activeTab === 'beranda' ? 'Law Edu Kit' : activeTab)}
+                                    </h1>
+                                    {activeTab === 'beranda' && !selectedMateri && (
+                                        <p className="text-[16px] text-blue-500 font-black uppercase tracking-widest leading-none mt-1">Smart Citizen</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="p-2 text-slate-400"><Icon name="search" size={16}/></button>
+                            <button className="p-2 text-slate-400"><Icon name="bell" size={16}/></button>
+                        </div>
+                    </header>
+
+                    {}
+                    <main className="flex-1 overflow-y-auto px-5 py-6 pb-24">
+                        {activeTab === 'beranda' && (
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                                    <h2 className="text-2xl font-black leading-tight text-white">Bijak Berinternet,<br/>Selamat Dari Jerat!</h2>
+                                    <button onClick={() => setActiveTab('materi')} className="mt-4 bg-white text-blue-700 px-4 py-2 rounded-full font-bold text-[10px] uppercase shadow-md active:translate-y-1 transition-all">Mulai Belajar</button>
+                                    <Icon name="shield" size={80} className="absolute -bottom-4 -right-4 opacity-10 rotate-12" />
+                                </div>
+                                
+                                <div className="grid grid-cols-4 gap-3">
+                                    {[
+                                        { id: 'materi', icon: 'book-open', label: 'Materi', color: 'bg-blue-500' },
+                                        { id: 'simulasi', icon: 'zap', label: 'Kasus', color: 'bg-emerald-500' },
+                                        { id: 'konsultasi', icon: 'message-square', label: 'Layanan', color: 'bg-rose-500' },
+                                        { id: 'kuis', icon: 'trophy', label: 'Kuis', color: 'bg-amber-500' },
+                                    ].map(item => (
+                                        <button key={item.id} onClick={() => setActiveTab(item.id)} className="flex flex-col items-center gap-2 group">
+                                            <div className={`${item.color} w-full aspect-square rounded-2xl flex items-center justify-center text-white shadow-sm group-active:scale-90 transition-transform`}>
+                                                <Icon name={item.icon} size={22} />
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">{item.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="p-5 bg-blue-50 rounded-3xl border border-blue-100 relative overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Informasi Terkini</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-700 leading-relaxed relative z-10">Unduh Salinan Terbaru UU ITE & Panduan Keamanan Data Digital Nasional.</p>
+                                    <Icon name="file-text" size={40} className="absolute -right-2 -bottom-2 text-blue-100" />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'materi' && !selectedMateri && (
+                            <div className="space-y-4 animate-slide-up">
+                                {Object.keys(CONTENT_MATERI).map(key => (
+                                    <div key={key} onClick={() => setSelectedMateri(key)} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer active:scale-95 transition-transform">
+                                        <div className="bg-blue-50 p-3 rounded-2xl"><Icon name="file-text" size={24} className="text-blue-500" /></div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-sm text-slate-800">{CONTENT_MATERI[key].title}</h3>
+                                            <p className="text-[10px] text-slate-400">Pelajari aturan & pencegahan</p>
+                                        </div>
+                                        <Icon name="chevron-right" size={16} className="text-slate-300" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {selectedMateri && (
+                            <div className="animate-fade-in space-y-4">
+                                <h2 className="text-lg font-black text-blue-600 uppercase">{CONTENT_MATERI[selectedMateri].title}</h2>
+                                {CONTENT_MATERI[selectedMateri].content.map((item, i) => (
+                                    <div key={i} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                                        <h4 className="font-black text-slate-800 text-xs uppercase mb-1">{item.t}</h4>
+                                        <p className="text-xs text-slate-500 font-medium">{item.d}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {}
+                        {activeTab === 'kuis' && (
+                            <div className="animate-fade-in">
+                                {kuisStep === 0 && (
+                                    <div className="text-center space-y-6 pt-10">
+                                        <div className="bg-amber-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-amber-600 shadow-inner">
+                                            <Icon name="trophy" size={40} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black uppercase text-slate-800">Uji Pengetahuanmu</h2>
+                                            <p className="text-xs text-slate-500 font-medium px-10 leading-relaxed">Selesaikan 10 tantangan kuis untuk mendapatkan sertifikat Cerdas Berdigital.</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                setKuisStep(1);
+                                                setCurrentQuestionIndex(0);
+                                                setScore(0);
+                                            }}
+                                            className="bg-blue-600 text-white w-full py-4 rounded-3xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-200 active:scale-95 transition-all"
+                                        >
+                                            Mulai Kuis Sekarang
+                                        </button>
+                                    </div>
+                                )}
+
+                                {kuisStep === 1 && (
+                                    <div className="space-y-6 animate-zoom-in">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pertanyaan {currentQuestionIndex + 1}/10</span>
+                                            <div className="h-1.5 w-32 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((currentQuestionIndex + 1)/10)*100}%`}}></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm min-h-[140px] flex items-center">
+                                            <p className="font-bold text-slate-800 text-sm leading-relaxed">{kuisData[currentQuestionIndex].question}</p>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {kuisData[currentQuestionIndex].options.map((opt, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => !showFeedback && setSelectedOption(idx)}
+                                                    className={`w-full p-4 rounded-2xl text-left text-xs font-bold transition-all border-2 flex items-center gap-3 ${
+                                                        selectedOption === idx 
+                                                            ? (showFeedback ? (opt.correct ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700') : 'bg-blue-50 border-blue-500 text-blue-700 shadow-md')
+                                                            : (showFeedback && opt.correct ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-50 text-slate-600')
+                                                    }`}
+                                                >
+                                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 ${selectedOption === idx ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                        {opt.id}
+                                                    </span>
+                                                    {opt.text}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <button 
+                                            onClick={handleKuisNext}
+                                            disabled={selectedOption === null || showFeedback}
+                                            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${
+                                                selectedOption === null ? 'bg-slate-100 text-slate-300' : 'bg-slate-900 text-white shadow-xl active:scale-95'
+                                            }`}
+                                        >
+                                            {showFeedback ? 'Mengecek...' : 'Konfirmasi Jawaban'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {kuisStep === 2 && (
+                                    <div className="text-center space-y-6 pt-10 animate-fade-in">
+                                        <div className="relative inline-block">
+                                            <div className="bg-emerald-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+                                                <Icon name="party-popper" size={48} />
+                                            </div>
+                                            <div className="absolute -top-2 -right-2 bg-amber-400 text-white p-2 rounded-full font-black text-xs shadow-md">
+                                                {Math.round((score/10)*100)}%
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-black uppercase text-slate-800">Luar Biasa!</h2>
+                                            <p className="text-xs text-slate-500 font-medium px-8">Kamu berhasil menjawab {score} dari 10 soal dengan benar.</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Keanggotaan</p>
+                                            <p className="text-sm font-black text-blue-600 uppercase italic">Citizen Digital Elite</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setKuisStep(0)}
+                                            className="bg-blue-600 text-white w-full py-4 rounded-3xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all"
+                                        >
+                                            Ulangi Kuis
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {}
+                        {activeTab === 'simulasi' && (
+                            <div className="animate-fade-in">
+                                {simStep === 0 && (
+                                    <div className="text-center space-y-6 pt-10">
+                                        <div className="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+                                            <Icon name="zap" size={40} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black uppercase text-slate-800">Simulasi Kasus</h2>
+                                            <p className="text-xs text-slate-500 font-medium px-10 leading-relaxed">Hadapi berbagai situasi nyata di media sosial dan buktikan kamu adalah warga digital yang bijak.</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                setSimStep(1);
+                                                setCurrentSimIndex(0);
+                                                setSimScore(0);
+                                                setSimFeedback(null);
+                                            }}
+                                            className="bg-emerald-600 text-white w-full py-4 rounded-3xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all"
+                                        >
+                                            Mulai Simulasi
+                                        </button>
+                                    </div>
+                                )}
+
+                                {simStep === 1 && (
+                                    <div className="space-y-6 animate-zoom-in">
+                                        <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-xl relative">
+                                            <span className="text-[9px] font-bold uppercase text-emerald-400 tracking-widest">Skenario {currentSimIndex + 1}</span>
+                                            <p className="mt-3 text-sm font-bold leading-relaxed">{simData[currentSimIndex].scenario}</p>
+                                            <Icon name="message-circle" size={40} className="absolute -bottom-2 -right-2 opacity-10" />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {simData[currentSimIndex].options.map((opt, i) => (
+                                                <button 
+                                                    key={i}
+                                                    onClick={() => handleSimChoice(opt)}
+                                                    disabled={simFeedback !== null}
+                                                    className={`choice-btn w-full p-5 rounded-3xl border-2 text-left text-xs font-bold transition-all ${
+                                                        simFeedback === opt
+                                                            ? (opt.c ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700')
+                                                            : (simFeedback && opt.c ? 'bg-emerald-50 border-emerald-500 opacity-50' : 'bg-white border-slate-100 text-slate-700')
+                                                    }`}
+                                                >
+                                                    {opt.t}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {simFeedback && (
+                                            <div className={`p-4 rounded-2xl animate-fade-in flex items-start gap-3 ${simFeedback.c ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                                                <Icon name={simFeedback.c ? "check-circle" : "alert-circle"} size={20} className="mt-0.5 flex-shrink-0" />
+                                                <p className="text-[11px] font-bold leading-relaxed">{simFeedback.msg}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {simStep === 2 && (
+                                    <div className="text-center space-y-6 pt-10 animate-fade-in">
+                                        <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-blue-600">
+                                            <Icon name="award" size={40} />
+                                        </div>
+                                        <h2 className="text-xl font-black uppercase text-slate-800">Selesai!</h2>
+                                        <p className="text-xs text-slate-500 font-medium px-10 leading-relaxed">Kamu telah menyelesaikan semua simulasi kasus digital.</p>
+                                        <div className="bg-slate-50 p-5 rounded-3xl">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Skor Kebijaksanaan</span>
+                                            <div className="flex justify-center gap-1">
+                                                {[...Array(3)].map((_, i) => (
+                                                    <Icon key={i} name="star" size={24} className={i < simScore ? "fill-amber-400 text-amber-400" : "text-slate-200"} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSimStep(0)} className="w-full bg-slate-900 text-white py-4 rounded-3xl font-black uppercase text-xs">Kembali</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {}
+                        {activeTab === 'konsultasi' && (
+                            <div className="animate-fade-in space-y-6 pb-10">
+                                <div className="text-center mb-4">
+                                    <h2 className="text-xl font-black uppercase text-rose-600">Layanan Bantuan</h2>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aduan & Kontak Resmi Digital</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black uppercase text-slate-500 px-2 tracking-widest">Kanal Pengaduan Resmi</h3>
+                                    
+                                    <a href="https://layanan.komdigi.go.id/layanan/detail/?id=38" target="_blank" rel="noopener noreferrer" className="block bg-white p-4 rounded-3xl border-2 border-rose-100 shadow-sm flex items-center gap-4 active:scale-95 transition-transform">
+                                        <div className="bg-rose-600 p-3 rounded-2xl text-white shadow-md"><Icon name="shield-alert" size={24} /></div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-sm text-slate-800">Layanan Konten Komdigi</h4>
+                                            <p className="text-[9px] text-rose-600 font-bold uppercase tracking-tighter">Aduan Konten Negatif & Ilegal</p>
+                                        </div>
+                                        <Icon name="external-link" size={16} className="text-slate-300" />
+                                    </a>
+
+                                    <a href="https://patrolisiber.id/submit-report/" target="_blank" rel="noopener noreferrer" className="block bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 active:scale-95 transition-transform">
+                                        <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-md"><Icon name="shield-check" size={24} /></div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-sm text-slate-800">Pengaduan Kejahatan Siber</h4>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Portal Laporan Tindak Pidana Siber</p>
+                                        </div>
+                                        <Icon name="external-link" size={16} className="text-slate-300" />
+                                    </a>
+
+                                    <div className="p-5 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center">
+                                        <Icon name="info" size={20} className="text-slate-400 mx-auto mb-2" />
+                                        <p className="text-[10px] font-medium text-slate-500 leading-relaxed px-4">
+                                            Komdigi (Kementerian Komunikasi dan Digital) menyediakan kanal ini untuk menjaga ruang digital Indonesia tetap sehat dan aman.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {}
+                    {!selectedMateri && (
+                        <nav className="glass-nav fixed bottom-0 w-full max-w-[450px] px-6 py-4 flex justify-between items-center z-[60]">
+                            {[
+                                { id: 'beranda', icon: 'home' },
+                                { id: 'materi', icon: 'book' },
+                                { id: 'simulasi', icon: 'zap' },
+                                { id: 'kuis', icon: 'trophy' },
+                                { id: 'konsultasi', icon: 'heart' },
+                            ].map(tab => (
+                                <button 
+                                    key={tab.id} 
+                                    onClick={() => {
+                                        setActiveTab(tab.id);
+                                        setKuisStep(0);
+                                        setSimStep(0);
+                                    }}
+                                    className={`relative flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400'}`}
+                                >
+                                    <Icon name={tab.icon} size={22} className={activeTab === tab.id ? "animate-zoom-in" : ""} />
+                                    <span className="text-[7px] font-black uppercase tracking-tighter">{tab.id}</span>
+                                    {activeTab === tab.id && <div className="absolute -top-1 w-1 h-1 bg-blue-600 rounded-full"></div>}
+                                </button>
+                            ))}
+                        </nav>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
